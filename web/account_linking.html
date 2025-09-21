@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Social Media Accounts - JACAI Pro</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🔗 Link Social Media Accounts</h1>
+            <p>Connect your social media accounts to enable automated posting</p>
+        </header>
+
+        <main class="linking-container">
+            <!-- Instagram -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <span class="platform-icon">📸</span>
+                        <div>
+                            <h3>Instagram Business</h3>
+                            <p>Post photos, stories, and reels</p>
+                        </div>
+                    </div>
+                    <div class="platform-status" id="instagram-status">
+                        <span class="status-badge disconnected">Not Connected</span>
+                    </div>
+                </div>
+                
+                <div class="platform-actions">
+                    <button class="connect-btn" onclick="connectPlatform('instagram')" id="instagram-btn">
+                        Connect Instagram
+                    </button>
+                    <div class="platform-requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Instagram Business Account</li>
+                            <li>Facebook Page linked to Instagram</li>
+                            <li>Facebook Developer App</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Twitter -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <span class="platform-icon">🐦</span>
+                        <div>
+                            <h3>Twitter</h3>
+                            <p>Tweet and engage with your audience</p>
+                        </div>
+                    </div>
+                    <div class="platform-status" id="twitter-status">
+                        <span class="status-badge disconnected">Not Connected</span>
+                    </div>
+                </div>
+                
+                <div class="platform-actions">
+                    <button class="connect-btn" onclick="connectPlatform('twitter')" id="twitter-btn">
+                        Connect Twitter
+                    </button>
+                    <div class="platform-requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Twitter Developer Account</li>
+                            <li>API v2 Access</li>
+                            <li>Write permissions enabled</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <span class="platform-icon">💼</span>
+                        <div>
+                            <h3>LinkedIn</h3>
+                            <p>Share professional content and insights</p>
+                        </div>
+                    </div>
+                    <div class="platform-status" id="linkedin-status">
+                        <span class="status-badge disconnected">Not Connected</span>
+                    </div>
+                </div>
+                
+                <div class="platform-actions">
+                    <button class="connect-btn" onclick="connectPlatform('linkedin')" id="linkedin-btn">
+                        Connect LinkedIn
+                    </button>
+                    <div class="platform-requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>LinkedIn Developer App</li>
+                            <li>Marketing Developer Platform access</li>
+                            <li>w_member_social permission</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Token Entry -->
+            <div class="manual-entry-card">
+                <h3>🔑 Manual Token Entry</h3>
+                <p>Already have API tokens? Enter them manually:</p>
+                
+                <form id="manualTokenForm">
+                    <div class="form-group">
+                        <label>Platform</label>
+                        <select id="manualPlatform" required>
+                            <option value="">Select Platform</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="linkedin">LinkedIn</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Account Name/Username</label>
+                        <input type="text" id="accountName" placeholder="@username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Access Token</label>
+                        <textarea id="accessToken" placeholder="Paste your access token here..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Account ID (if required)</label>
+                        <input type="text" id="accountId" placeholder="Account/Page ID">
+                    </div>
+                    
+                    <button type="submit" class="manual-submit-btn">Add Account</button>
+                </form>
+            </div>
+
+            <!-- Setup Instructions -->
+            <div class="instructions-card">
+                <h3>📋 Setup Instructions</h3>
+                
+                <div class="instruction-tabs">
+                    <button class="tab-btn active" onclick="showInstructions('instagram')">Instagram</button>
+                    <button class="tab-btn" onclick="showInstructions('twitter')">Twitter</button>
+                    <button class="tab-btn" onclick="showInstructions('linkedin')">LinkedIn</button>
+                </div>
+
+                <div id="instagram-instructions" class="instruction-content">
+                    <h4>Instagram Business API Setup:</h4>
+                    <ol>
+                        <li>Go to <a href="https://developers.facebook.com" target="_blank">Facebook Developers</a></li>
+                        <li>Create a new app → Business type</li>
+                        <li>Add "Instagram Basic Display" product</li>
+                        <li>Configure OAuth redirect URI: <code>http://localhost:8080/oauth/callback</code></li>
+                        <li>Get your App ID and App Secret</li>
+                        <li>Generate User Access Token</li>
+                        <li>Exchange for Long-Lived Token (60 days)</li>
+                    </ol>
+                </div>
+
+                <div id="twitter-instructions" class="instruction-content" style="display: none;">
+                    <h4>Twitter API v2 Setup:</h4>
+                    <ol>
+                        <li>Apply at <a href="https://developer.twitter.com" target="_blank">Twitter Developer Portal</a></li>
+                        <li>Create a new project and app</li>
+                        <li>Enable OAuth 2.0 with PKCE</li>
+                        <li>Add callback URL: <code>http://localhost:8080/oauth/callback</code></li>
+                        <li>Request elevated access for write permissions</li>
+                        <li>Generate API Key, Secret, and Bearer Token</li>
+                    </ol>
+                </div>
+
+                <div id="linkedin-instructions" class="instruction-content" style="display: none;">
+                    <h4>LinkedIn API Setup:</h4>
+                    <ol>
+                        <li>Go to <a href="https://developer.linkedin.com" target="_blank">LinkedIn Developers</a></li>
+                        <li>Create a new app</li>
+                        <li>Request "Marketing Developer Platform" access</li>
+                        <li>Add OAuth 2.0 redirect URL: <code>http://localhost:8080/oauth/callback</code></li>
+                        <li>Request w_member_social permission</li>
+                        <li>Get Client ID and Client Secret</li>
+                    </ol>
+                </div>
+            </div>
+        </main>
+
+        <div class="actions">
+            <button onclick="window.location.href='/dashboard'" class="back-btn">Back to Dashboard</button>
+            <button onclick="testConnections()" class="test-btn">Test All Connections</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const authHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        // Connect platform via OAuth
+        function connectPlatform(platform) {
+            const redirectUri = `${window.location.origin}/oauth/callback`;
+            window.location.href = `/api/oauth/authorize/${platform}?redirect_uri=${encodeURIComponent(redirectUri)}`;
+        }
+
+        // Manual token form submission
+        document.getElementById('manualTokenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const platform = document.getElementById('manualPlatform').value;
+            const accountName = document.getElementById('accountName').value;
+            const accessToken = document.getElementById('accessToken').value;
+            const accountId = document.getElementById('accountId').value;
+
+            try {
+                const response = await fetch('/api/link-social-account', {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: JSON.stringify({
+                        platform,
+                        account_name: accountName,
+                        access_token: accessToken,
+                        account_id: accountId
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(`${platform} account linked successfully!`);
+                    updatePlatformStatus(platform, 'connected', accountName);
+                    document.getElementById('manualTokenForm').reset();
+                } else {
+                    alert('Failed to link account: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Update platform status
+        function updatePlatformStatus(platform, status, accountName = '') {
+            const statusElement = document.getElementById(`${platform}-status`);
+            const btnElement = document.getElementById(`${platform}-btn`);
+            
+            if (status === 'connected') {
+                statusElement.innerHTML = `<span class="status-badge connected">Connected: ${accountName}</span>`;
+                btnElement.textContent = 'Reconnect';
+                btnElement.classList.add('reconnect');
+            } else {
+                statusElement.innerHTML = `<span class="status-badge disconnected">Not Connected</span>`;
+                btnElement.textContent = `Connect ${platform.charAt(0).toUpperCase() + platform.slice(1)}`;
+                btnElement.classList.remove('reconnect');
+            }
+        }
+
+        // Show instructions
+        function showInstructions(platform) {
+            // Hide all instruction contents
+            document.querySelectorAll('.instruction-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected content and activate tab
+            document.getElementById(`${platform}-instructions`).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        // Test all connections
+        async function testConnections() {
+            try {
+                const response = await fetch('/api/test-social-connections', {
+                    headers: authHeaders
+                });
+                
+                const data = await response.json();
+                alert('Connection test results:\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                alert('Test failed: ' + error.message);
+            }
+        }
+
+        // Load existing connections on page load
+        async function loadConnections() {
+            try {
+                const response = await fetch('/api/social-accounts', {
+                    headers: authHeaders
+                });
+                
+                const accounts = await response.json();
+                accounts.forEach(account => {
+                    updatePlatformStatus(account.platform, 'connected', account.account_name);
+                });
+            } catch (error) {
+                console.error('Failed to load connections:', error);
+            }
+        }
+
+        // Initialize
+        loadConnections();
+    </script>
+
+    <style>
+        .linking-container {
+            display: grid;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .platform-card, .manual-entry-card, .instructions-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .platform-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .platform-icon {
+            font-size: 2rem;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-badge.connected {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.disconnected {
+            background: var(--error);
+            color: white;
+        }
+
+        .connect-btn, .manual-submit-btn {
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .connect-btn.reconnect {
+            background: var(--secondary);
+        }
+
+        .platform-requirements ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .platform-requirements li {
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .instruction-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .instruction-content ol {
+            padding-left: 1.5rem;
+        }
+
+        .instruction-content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .instruction-content code {
+            background: var(--surface-light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .back-btn, .test-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .test-btn {
+            background: var(--secondary);
+            color: white;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+    </style>
+</body>
+</html>
