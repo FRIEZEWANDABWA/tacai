@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JACAI Pro - Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <h1>🤖 JACAI Pro</h1>
+                <span id="username"></span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="/link-accounts" class="nav-link">🔗 Link Accounts</a>
+                <a href="/analytics" class="nav-link">📊 Analytics</a>
+            </nav>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </header>
+
+        <main class="dashboard">
+            <div class="dashboard-section">
+                <h2>Generate Content</h2>
+                <form id="generateForm">
+                    <div class="form-group">
+                        <label>Topic</label>
+                        <input type="text" id="topic" placeholder="Enter your topic..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Platforms</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="instagram" checked> Instagram</label>
+                            <label><input type="checkbox" value="twitter"> Twitter</label>
+                            <label><input type="checkbox" value="linkedin"> LinkedIn</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Style</label>
+                        <select id="style">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="creative">Creative</option>
+                            <option value="motivational">Motivational</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><input type="checkbox" id="autoPost"> Auto-post to linked accounts</label>
+                    </div>
+                    
+                    <button type="submit" class="generate-btn">Generate Content</button>
+                </form>
+            </div>
+
+            <div class="dashboard-section">
+                <h2>🔗 Social Accounts</h2>
+                <div id="socialAccounts">
+                    <p>Loading accounts...</p>
+                </div>
+                <div class="account-actions">
+                    <button onclick="window.location.href='/link-accounts'" class="link-btn">🔗 Manage Accounts</button>
+                    <button onclick="testAllConnections()" class="test-btn">📝 Test Connections</button>
+                    <button onclick="refreshAccounts()" class="refresh-btn">🔄 Refresh</button>
+                </div>
+                
+                <!-- Quick Link Buttons -->
+                <div class="quick-links">
+                    <h4>Quick Connect:</h4>
+                    <div class="platform-buttons">
+                        <button onclick="quickConnect('instagram')" class="platform-btn instagram">
+                            📸 Instagram
+                        </button>
+                        <button onclick="quickConnect('twitter')" class="platform-btn twitter">
+                            🐦 Twitter
+                        </button>
+                        <button onclick="quickConnect('linkedin')" class="platform-btn linkedin">
+                            💼 LinkedIn
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h2>Generated Content</h2>
+                <div id="generatedContent">
+                    <p>No content generated yet.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/';
+        }
+
+        // Set auth header for all requests
+        const authHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        // Load social accounts
+        async function loadSocialAccounts() {
+            try {
+                const response = await fetch('/api/social-accounts', {
+                    headers: authHeaders
+                });
+                const accounts = await response.json();
+                
+                const container = document.getElementById('socialAccounts');
+                if (accounts.length === 0) {
+                    container.innerHTML = '<p>No accounts linked yet. <a href="/link-accounts">Link your first account</a></p>';
+                } else {
+                    container.innerHTML = accounts.map(acc => 
+                        `<div class="social-account">
+                            <div class="account-info">
+                                <span class="platform-icon">${getPlatformIcon(acc.platform)}</span>
+                                <div>
+                                    <strong>${acc.platform}</strong>
+                                    <br><small>${acc.account_name}</small>
+                                </div>
+                            </div>
+                            <div class="account-actions">
+                                <span class="status ${acc.is_active ? 'active' : 'inactive'}">
+                                    ${acc.is_active ? '✅ Active' : '❌ Inactive'}
+                                </span>
+                                <button onclick="unlinkAccount('${acc.platform}')" class="unlink-btn">Unlink</button>
+                            </div>
+                        </div>`
+                    ).join('');
+                }
+                
+                // Helper function for platform icons
+                function getPlatformIcon(platform) {
+                    const icons = {
+                        instagram: '📸',
+                        twitter: '🐦',
+                        linkedin: '💼',
+                        facebook: '👥'
+                    };
+                    return icons[platform] || '🔗';
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+            }
+        }
+
+        // Generate content
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const topic = document.getElementById('topic').value;
+            const style = document.getElementById('style').value;
+            const autoPost = document.getElementById('autoPost').checked;
+            
+            const platforms = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value)
+                .filter(val => val !== 'on'); // Remove auto-post checkbox
+            
+            if (platforms.length === 0) {
+                alert('Please select at least one platform');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: JSON.stringify({
+                        topic,
+                        platforms,
+                        style,
+                        auto_post: autoPost
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    displayGeneratedContent(data.results);
+                } else {
+                    alert('Generation failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Display generated content
+        function displayGeneratedContent(results) {
+            const container = document.getElementById('generatedContent');
+            container.innerHTML = results.map(result => `
+                <div class="content-result">
+                    <h3>${result.platform.toUpperCase()}</h3>
+                    <div class="content-item">
+                        <h4>Caption:</h4>
+                        <p>${result.content.caption}</p>
+                        <button onclick="copyText('${result.content.caption.replace(/'/g, "\\'")}')">Copy</button>
+                    </div>
+                    <div class="content-item">
+                        <h4>Hashtags:</h4>
+                        <p>${result.content.hashtags}</p>
+                        <button onclick="copyText('${result.content.hashtags}')">Copy</button>
+                    </div>
+                    <div class="content-item">
+                        <h4>Image Prompt:</h4>
+                        <p>${result.content.image_prompt}</p>
+                        <button onclick="copyText('${result.content.image_prompt.replace(/'/g, "\\'")}')">Copy</button>
+                    </div>
+                    ${result.posted ? '<span class="posted-badge">Posted</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // Copy text to clipboard
+        async function copyText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('Copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        }
+
+        // Quick connect to platform
+        async function quickConnect(platform) {
+            try {
+                const redirectUri = `${window.location.origin}/oauth/callback`;
+                const response = await fetch(`/api/oauth/authorize/${platform}?redirect_uri=${encodeURIComponent(redirectUri)}`, {
+                    headers: authHeaders
+                });
+                
+                const data = await response.json();
+                if (data.auth_url) {
+                    window.open(data.auth_url, 'oauth', 'width=600,height=600');
+                } else {
+                    alert('OAuth not configured. Use manual token entry.');
+                    window.location.href = '/link-accounts';
+                }
+            } catch (error) {
+                console.error('Quick connect failed:', error);
+                window.location.href = '/link-accounts';
+            }
+        }
+        
+        // Test all connections
+        async function testAllConnections() {
+            try {
+                const response = await fetch('/api/test-social-connections', {
+                    headers: authHeaders
+                });
+                
+                const data = await response.json();
+                let message = 'Connection Test Results:\n\n';
+                
+                data.results.forEach(result => {
+                    message += `${result.platform}: ${result.status}\n`;
+                });
+                
+                alert(message);
+            } catch (error) {
+                alert('Test failed: ' + error.message);
+            }
+        }
+        
+        // Refresh accounts
+        function refreshAccounts() {
+            loadSocialAccounts();
+        }
+        
+        // Unlink account
+        async function unlinkAccount(platform) {
+            if (confirm(`Are you sure you want to unlink your ${platform} account?`)) {
+                try {
+                    const response = await fetch(`/api/social-accounts/${platform}`, {
+                        method: 'DELETE',
+                        headers: authHeaders
+                    });
+                    
+                    if (response.ok) {
+                        alert(`${platform} account unlinked successfully`);
+                        loadSocialAccounts();
+                    } else {
+                        alert('Failed to unlink account');
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        // Initialize
+        loadSocialAccounts();
+    </script>
+
+    <style>
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .dashboard-section {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .dashboard-section:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .social-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--surface-light);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status.active {
+            color: var(--success);
+        }
+
+        .status.inactive {
+            color: var(--error);
+        }
+
+        .content-result {
+            background: var(--surface-light);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-item {
+            margin-bottom: 1rem;
+        }
+
+        .content-item h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .content-item button {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .posted-badge {
+            background: var(--success);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link.active, .nav-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .account-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .link-btn, .test-btn, .refresh-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .link-btn {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .test-btn {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .refresh-btn {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+        
+        .quick-links {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .platform-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        
+        .platform-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .platform-btn.instagram {
+            background: #E4405F;
+            color: white;
+        }
+        
+        .platform-btn.twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+        
+        .platform-btn.linkedin {
+            background: #0077B5;
+            color: white;
+        }
+        
+        .social-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--surface-light);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .account-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .platform-icon {
+            font-size: 1.5rem;
+        }
+        
+        .account-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .unlink-btn {
+            padding: 0.25rem 0.75rem;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-section:first-child {
+                grid-column: 1;
+            }
+        }
+    </style>
+</body>
+</html>
