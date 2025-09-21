@@ -12,9 +12,10 @@ from pydantic import BaseModel
 import uvicorn
 import requests
 from datetime import datetime
+import os
 
 # AI Configuration
-GEMINI_API_KEY = "AIzaSyDw6iEZWeDrHCv88JBlGkEW4OyFf1a3fCc"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "your-gemini-api-key-here")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
 app = FastAPI(title="JACAI - AI Social Media Generator", version="1.0.0")

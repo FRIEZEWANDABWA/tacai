@@ -16,7 +16,7 @@ import:py from datetime, datetime;
 
 # AI Models Configuration
 glob AI_MODELS = {
-    "gemini_key": "AIzaSyDw6iEZWeDrHCv88JBlGkEW4OyFf1a3fCc",
+    "gemini_key": "your-gemini-api-key-here",
     "gemini_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 };
 

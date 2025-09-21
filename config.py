@@ -2,7 +2,7 @@
 import os
 
 # API Keys (set these as environment variables)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDw6iEZWeDrHCv88JBlGkEW4OyFf1a3fCc")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # Social Media API Keys
