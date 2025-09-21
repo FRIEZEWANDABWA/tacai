@@ -115,6 +115,44 @@ async def account_linking():
         content = f.read()
     return HTMLResponse(content=content)
 
+@app.get("/compose", response_class=HTMLResponse)
+async def compose():
+    """Serve the compose page"""
+    with open("web/compose.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+@app.get("/calendar", response_class=HTMLResponse)
+async def calendar():
+    """Serve the calendar page"""
+    with open("web/calendar.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+@app.get("/analytics", response_class=HTMLResponse)
+async def analytics():
+    """Serve the analytics page"""
+    with open("web/analytics.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+@app.get("/content-library", response_class=HTMLResponse)
+async def content_library():
+    """Serve the content library page"""
+    with open("web/content-library.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+@app.get("/team", response_class=HTMLResponse)
+async def team():
+    """Serve the team page"""
+    return HTMLResponse(content="<h1>Team Management - Coming Soon</h1>")
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings():
+    """Serve the settings page"""
+    return HTMLResponse(content="<h1>Settings - Coming Soon</h1>")
+
 @app.post("/api/generate")
 async def generate_post(request: dict):
     """Generate social media content for multiple platforms"""

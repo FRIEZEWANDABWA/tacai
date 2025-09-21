@@ -28,19 +28,27 @@ The JACAI project has been successfully converted from Python/FastAPI to a **Jac
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Option 1: Docker Deployment (Recommended)
 ```bash
 cd /home/frieze/projects/jacai-jac
-pip install -r requirements.txt
+./deploy.sh
 ```
 
-### 2. Start the Application
+### Option 2: Manual Setup
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start Jaseci version
+python3 jaseci_server.py
+
+# Or start basic version
 python3 start.py
 ```
 
 ### 3. Access the Application
-- **URL**: http://localhost:8081
+- **Jaseci Version**: http://localhost:8082 (Recommended)
+- **Basic Version**: http://localhost:8081
 - **Login**: Use any username/password (demo mode)
 - **Dashboard**: Full content generation interface
 
@@ -198,4 +206,31 @@ MIT License - Built with ❤️ using FastAPI and ready for Jac integration.
 
 ---
 
-**Status**: ✅ **FULLY FUNCTIONAL** - Ready for production use and Jac integration!
+**Status**: ✅ **PRODUCTION READY** - Enterprise-grade Jaseci-powered platform!
+
+## 🧪 Testing
+
+```bash
+# Run comprehensive test suite
+python3 api_test.py
+
+# Test specific endpoints
+curl http://localhost:8082/api/health
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+```bash
+# One-command deployment
+./deploy.sh
+
+# Manual Docker deployment
+docker-compose up -d
+```
+
+### Cloud Deployment
+- **Railway**: Connect GitHub repo
+- **Heroku**: `git push heroku jaseci-version:main`
+- **AWS/GCP**: Use Docker Compose
+- **DigitalOcean**: App Platform deployment

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - JACAI Pro</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>🤖 JACAI Pro</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="/compose" class="nav-link"><span class="icon">✍️</span> Compose</a></li>
+                <li><a href="/calendar" class="nav-link"><span class="icon">📅</span> Calendar</a></li>
+                <li><a href="/analytics" class="nav-link active"><span class="icon">📈</span> Analytics</a></li>
+                <li><a href="/content-library" class="nav-link"><span class="icon">📚</span> Content Library</a></li>
+                <li><a href="/team" class="nav-link"><span class="icon">👥</span> Team</a></li>
+                <li><a href="/settings" class="nav-link"><span class="icon">⚙️</span> Settings</a></li>
+            </ul>
+            <div class="user-profile">
+                <div class="profile-info">
+                    <span id="userAvatar">👤</span>
+                    <span id="userName">User</span>
+                </div>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Analytics Dashboard</h1>
+                <div class="header-actions">
+                    <select id="dateRange" onchange="updateDateRange()">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="365">Last year</option>
+                    </select>
+                    <button class="btn-secondary" onclick="exportReport()">📊 Export Report</button>
+                    <button class="btn-primary" onclick="scheduleReport()">📧 Schedule Report</button>
+                </div>
+            </header>
+
+            <!-- Key Metrics Overview -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-content">
+                        <h3>Total Reach</h3>
+                        <div class="metric-value">124.5K</div>
+                        <div class="metric-change positive">+12.3% vs last period</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">👥</div>
+                    <div class="metric-content">
+                        <h3>Engagement</h3>
+                        <div class="metric-value">8.2K</div>
+                        <div class="metric-change positive">+5.7% vs last period</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">🔄</div>
+                    <div class="metric-content">
+                        <h3>Shares</h3>
+                        <div class="metric-value">1.8K</div>
+                        <div class="metric-change negative">-2.1% vs last period</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">📊</div>
+                    <div class="metric-content">
+                        <h3>Engagement Rate</h3>
+                        <div class="metric-value">6.8%</div>
+                        <div class="metric-change positive">+0.9% vs last period</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>📈 Engagement Over Time</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" onclick="switchChart('engagement')">Engagement</button>
+                            <button class="chart-btn" onclick="switchChart('reach')">Reach</button>
+                            <button class="chart-btn" onclick="switchChart('followers')">Followers</button>
+                        </div>
+                    </div>
+                    <canvas id="mainChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>🎯 Platform Performance</h3>
+                    </div>
+                    <canvas id="platformChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Platform Breakdown -->
+            <div class="platform-analytics">
+                <h3>Platform Performance Breakdown</h3>
+                <div class="platform-cards">
+                    <div class="platform-card instagram">
+                        <div class="platform-header">
+                            <span class="platform-icon">📸</span>
+                            <h4>Instagram</h4>
+                            <span class="follower-count">12.4K followers</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Posts</span>
+                                <span class="metric-value">24</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Avg. Likes</span>
+                                <span class="metric-value">342</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Engagement</span>
+                                <span class="metric-value">7.2%</span>
+                            </div>
+                        </div>
+                        <div class="platform-trend">
+                            <canvas id="instagramTrend" width="200" height="60"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="platform-card twitter">
+                        <div class="platform-header">
+                            <span class="platform-icon">🐦</span>
+                            <h4>Twitter</h4>
+                            <span class="follower-count">8.7K followers</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Tweets</span>
+                                <span class="metric-value">45</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Avg. Retweets</span>
+                                <span class="metric-value">28</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Engagement</span>
+                                <span class="metric-value">4.8%</span>
+                            </div>
+                        </div>
+                        <div class="platform-trend">
+                            <canvas id="twitterTrend" width="200" height="60"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="platform-card linkedin">
+                        <div class="platform-header">
+                            <span class="platform-icon">💼</span>
+                            <h4>LinkedIn</h4>
+                            <span class="follower-count">5.2K connections</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Posts</span>
+                                <span class="metric-value">18</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Avg. Likes</span>
+                                <span class="metric-value">89</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Engagement</span>
+                                <span class="metric-value">9.1%</span>
+                            </div>
+                        </div>
+                        <div class="platform-trend">
+                            <canvas id="linkedinTrend" width="200" height="60"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Performing Content -->
+            <div class="top-content">
+                <h3>🏆 Top Performing Content</h3>
+                <div class="content-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Content</th>
+                                <th>Platform</th>
+                                <th>Published</th>
+                                <th>Reach</th>
+                                <th>Engagement</th>
+                                <th>Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topContentTable">
+                            <!-- Top content will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audience Insights -->
+            <div class="audience-insights">
+                <div class="insight-card">
+                    <h3>👥 Audience Demographics</h3>
+                    <canvas id="demographicsChart" width="300" height="200"></canvas>
+                </div>
+                
+                <div class="insight-card">
+                    <h3>🕐 Best Posting Times</h3>
+                    <div class="time-heatmap">
+                        <canvas id="timeHeatmap" width="300" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="insight-card">
+                    <h3>🏷️ Top Hashtags</h3>
+                    <div class="hashtag-cloud">
+                        <span class="hashtag" style="font-size: 1.5em;">#productivity</span>
+                        <span class="hashtag" style="font-size: 1.2em;">#AI</span>
+                        <span class="hashtag" style="font-size: 1.8em;">#socialmedia</span>
+                        <span class="hashtag" style="font-size: 1.1em;">#marketing</span>
+                        <span class="hashtag" style="font-size: 1.4em;">#automation</span>
+                        <span class="hashtag" style="font-size: 1.0em;">#content</span>
+                        <span class="hashtag" style="font-size: 1.3em;">#digital</span>
+                        <span class="hashtag" style="font-size: 1.1em;">#strategy</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let mainChart, platformChart;
+        
+        function initCharts() {
+            // Main engagement chart
+            const ctx1 = document.getElementById('mainChart').getContext('2d');
+            mainChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Jan 1', 'Jan 8', 'Jan 15', 'Jan 22', 'Jan 29'],
+                    datasets: [{
+                        label: 'Engagement',
+                        data: [1200, 1900, 3000, 2500, 3200],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Platform performance chart
+            const ctx2 = document.getElementById('platformChart').getContext('2d');
+            platformChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Instagram', 'Twitter', 'LinkedIn', 'Facebook'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['#E4405F', '#1DA1F2', '#0077B5', '#1877F2']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Platform trend charts
+            createTrendChart('instagramTrend', [20, 25, 30, 28, 35]);
+            createTrendChart('twitterTrend', [15, 18, 22, 20, 25]);
+            createTrendChart('linkedinTrend', [10, 12, 15, 18, 20]);
+
+            // Demographics chart
+            const ctx3 = document.getElementById('demographicsChart').getContext('2d');
+            new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['18-24', '25-34', '35-44', '45-54', '55+'],
+                    datasets: [{
+                        label: 'Audience %',
+                        data: [15, 35, 25, 15, 10],
+                        backgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Time heatmap
+            const ctx4 = document.getElementById('timeHeatmap').getContext('2d');
+            new Chart(ctx4, {
+                type: 'bar',
+                data: {
+                    labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM'],
+                    datasets: [{
+                        label: 'Engagement',
+                        data: [20, 45, 60, 35, 80, 40],
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function createTrendChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', ''],
+                    datasets: [{
+                        data: data,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        function loadTopContent() {
+            const topContent = [
+                {
+                    content: "🚀 AI productivity tips that changed my workflow",
+                    platform: "Instagram",
+                    published: "2024-01-10",
+                    reach: "12.4K",
+                    engagement: "892",
+                    rate: "7.2%"
+                },
+                {
+                    content: "Thread: Social media automation best practices 🧵",
+                    platform: "Twitter",
+                    published: "2024-01-08",
+                    reach: "8.7K",
+                    engagement: "456",
+                    rate: "5.2%"
+                },
+                {
+                    content: "Professional insights on digital marketing trends",
+                    platform: "LinkedIn",
+                    published: "2024-01-05",
+                    reach: "5.2K",
+                    engagement: "234",
+                    rate: "4.5%"
+                }
+            ];
+
+            const tbody = document.getElementById('topContentTable');
+            tbody.innerHTML = topContent.map(item => `
+                <tr>
+                    <td class="content-cell">
+                        <div class="content-preview">${item.content}</div>
+                    </td>
+                    <td>
+                        <span class="platform-badge ${item.platform.toLowerCase()}">${item.platform}</span>
+                    </td>
+                    <td>${item.published}</td>
+                    <td>${item.reach}</td>
+                    <td>${item.engagement}</td>
+                    <td class="rate-cell">${item.rate}</td>
+                </tr>
+            `).join('');
+        }
+
+        function switchChart(type) {
+            // Update active button
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update chart data based on type
+            let newData, newLabel;
+            switch(type) {
+                case 'reach':
+                    newData = [5000, 7500, 12000, 9500, 15000];
+                    newLabel = 'Reach';
+                    break;
+                case 'followers':
+                    newData = [100, 150, 200, 180, 250];
+                    newLabel = 'New Followers';
+                    break;
+                default:
+                    newData = [1200, 1900, 3000, 2500, 3200];
+                    newLabel = 'Engagement';
+            }
+
+            mainChart.data.datasets[0].data = newData;
+            mainChart.data.datasets[0].label = newLabel;
+            mainChart.update();
+        }
+
+        function exportReport() {
+            alert('Report export functionality would be implemented here');
+        }
+
+        function scheduleReport() {
+            alert('Schedule report functionality would be implemented here');
+        }
+
+        function updateDateRange() {
+            const range = document.getElementById('dateRange').value;
+            // Update all charts and metrics based on selected range
+            console.log('Updating date range to:', range, 'days');
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadTopContent();
+        });
+    </script>
+
+    <style>
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .metric-change.positive { color: #10b981; }
+        .metric-change.negative { color: #ef4444; }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .platform-analytics {
+            margin-bottom: 2rem;
+        }
+
+        .platform-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .platform-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .platform-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .platform-icon {
+            font-size: 1.5rem;
+        }
+
+        .follower-count {
+            margin-left: auto;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .platform-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .top-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .content-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .content-table th,
+        .content-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .content-table th {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .content-preview {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .audience-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .hashtag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .hashtag {
+            background: #f3f4f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

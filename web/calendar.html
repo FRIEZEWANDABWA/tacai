@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Calendar - JACAI Pro</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>🤖 JACAI Pro</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="/compose" class="nav-link"><span class="icon">✍️</span> Compose</a></li>
+                <li><a href="/calendar" class="nav-link active"><span class="icon">📅</span> Calendar</a></li>
+                <li><a href="/analytics" class="nav-link"><span class="icon">📈</span> Analytics</a></li>
+                <li><a href="/content-library" class="nav-link"><span class="icon">📚</span> Content Library</a></li>
+                <li><a href="/team" class="nav-link"><span class="icon">👥</span> Team</a></li>
+                <li><a href="/settings" class="nav-link"><span class="icon">⚙️</span> Settings</a></li>
+            </ul>
+            <div class="user-profile">
+                <div class="profile-info">
+                    <span id="userAvatar">👤</span>
+                    <span id="userName">User</span>
+                </div>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Content Calendar</h1>
+                <div class="header-actions">
+                    <div class="view-toggle">
+                        <button class="view-btn active" onclick="switchView('month')">Month</button>
+                        <button class="view-btn" onclick="switchView('week')">Week</button>
+                        <button class="view-btn" onclick="switchView('day')">Day</button>
+                    </div>
+                    <button class="btn-primary" onclick="window.location.href='/compose'">+ New Post</button>
+                </div>
+            </header>
+
+            <!-- Calendar Controls -->
+            <div class="calendar-controls">
+                <div class="calendar-nav">
+                    <button class="nav-btn" onclick="previousPeriod()">‹</button>
+                    <h2 id="currentPeriod">January 2024</h2>
+                    <button class="nav-btn" onclick="nextPeriod()">›</button>
+                    <button class="today-btn" onclick="goToToday()">Today</button>
+                </div>
+                
+                <div class="calendar-filters">
+                    <select id="platformFilter" onchange="filterByPlatform()">
+                        <option value="all">All Platforms</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="twitter">Twitter</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="facebook">Facebook</option>
+                    </select>
+                    
+                    <select id="statusFilter" onchange="filterByStatus()">
+                        <option value="all">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="calendar-container">
+                <div id="monthView" class="calendar-view active">
+                    <div class="calendar-header">
+                        <div class="day-header">Sun</div>
+                        <div class="day-header">Mon</div>
+                        <div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div>
+                        <div class="day-header">Thu</div>
+                        <div class="day-header">Fri</div>
+                        <div class="day-header">Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar days will be generated here -->
+                    </div>
+                </div>
+
+                <div id="weekView" class="calendar-view">
+                    <div class="week-header">
+                        <div class="time-column">Time</div>
+                        <div class="day-column">Sun</div>
+                        <div class="day-column">Mon</div>
+                        <div class="day-column">Tue</div>
+                        <div class="day-column">Wed</div>
+                        <div class="day-column">Thu</div>
+                        <div class="day-column">Fri</div>
+                        <div class="day-column">Sat</div>
+                    </div>
+                    <div class="week-grid" id="weekGrid">
+                        <!-- Week view will be generated here -->
+                    </div>
+                </div>
+
+                <div id="dayView" class="calendar-view">
+                    <div class="day-schedule" id="daySchedule">
+                        <!-- Day view will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Panel -->
+            <div class="bulk-actions" id="bulkActions" style="display: none;">
+                <div class="bulk-info">
+                    <span id="selectedCount">0</span> posts selected
+                </div>
+                <div class="bulk-buttons">
+                    <button class="btn-secondary" onclick="bulkReschedule()">📅 Reschedule</button>
+                    <button class="btn-secondary" onclick="bulkDuplicate()">📋 Duplicate</button>
+                    <button class="btn-danger" onclick="bulkDelete()">🗑️ Delete</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Post Detail Modal -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Post Details</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="postDetails">
+                <!-- Post details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="editPost()">Edit</button>
+                <button class="btn-secondary" onclick="duplicatePost()">Duplicate</button>
+                <button class="btn-danger" onclick="deletePost()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let currentView = 'month';
+        let selectedPosts = new Set();
+        let posts = [
+            {
+                id: 1,
+                content: "🚀 Exciting AI productivity tips coming your way!",
+                platform: "instagram",
+                scheduledTime: "2024-01-15T10:00:00",
+                status: "scheduled",
+                engagement: { likes: 0, comments: 0, shares: 0 }
+            },
+            {
+                id: 2,
+                content: "Quick thread on social media automation 🧵",
+                platform: "twitter",
+                scheduledTime: "2024-01-15T14:30:00",
+                status: "scheduled",
+                engagement: { likes: 0, comments: 0, shares: 0 }
+            },
+            {
+                id: 3,
+                content: "Professional insights on digital marketing trends",
+                platform: "linkedin",
+                scheduledTime: "2024-01-16T09:00:00",
+                status: "published",
+                engagement: { likes: 24, comments: 5, shares: 8 }
+            }
+        ];
+
+        function initCalendar() {
+            updatePeriodDisplay();
+            renderCalendar();
+        }
+
+        function updatePeriodDisplay() {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            if (currentView === 'month') {
+                document.getElementById('currentPeriod').textContent = 
+                    `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            } else if (currentView === 'week') {
+                const weekStart = new Date(currentDate);
+                weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                document.getElementById('currentPeriod').textContent = 
+                    `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+            } else {
+                document.getElementById('currentPeriod').textContent = 
+                    currentDate.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+            }
+        }
+
+        function renderCalendar() {
+            if (currentView === 'month') {
+                renderMonthView();
+            } else if (currentView === 'week') {
+                renderWeekView();
+            } else {
+                renderDayView();
+            }
+        }
+
+        function renderMonthView() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            for (let i = 0; i < 42; i++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                if (cellDate.getMonth() !== currentDate.getMonth()) {
+                    dayCell.classList.add('other-month');
+                }
+                if (cellDate.toDateString() === new Date().toDateString()) {
+                    dayCell.classList.add('today');
+                }
+                
+                dayCell.innerHTML = `
+                    <div class="day-number">${cellDate.getDate()}</div>
+                    <div class="day-posts" id="posts-${cellDate.toISOString().split('T')[0]}">
+                        ${getPostsForDate(cellDate)}
+                    </div>
+                `;
+                
+                dayCell.addEventListener('click', () => selectDate(cellDate));
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function getPostsForDate(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayPosts = posts.filter(post => 
+                post.scheduledTime.split('T')[0] === dateStr
+            );
+            
+            return dayPosts.map(post => `
+                <div class="post-item ${post.platform} ${post.status}" 
+                     onclick="showPostDetails(${post.id})" 
+                     data-post-id="${post.id}">
+                    <div class="post-platform">${getPlatformIcon(post.platform)}</div>
+                    <div class="post-time">${new Date(post.scheduledTime).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</div>
+                    <div class="post-preview">${post.content.substring(0, 30)}...</div>
+                </div>
+            `).join('');
+        }
+
+        function getPlatformIcon(platform) {
+            const icons = {
+                instagram: '📸',
+                twitter: '🐦',
+                linkedin: '💼',
+                facebook: '👥',
+                tiktok: '🎵',
+                youtube: '📺'
+            };
+            return icons[platform] || '📱';
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update active button
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide views
+            document.querySelectorAll('.calendar-view').forEach(view => view.classList.remove('active'));
+            document.getElementById(`${view}View`).classList.add('active');
+            
+            updatePeriodDisplay();
+            renderCalendar();
+        }
+
+        function previousPeriod() {
+            if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() - 7);
+            } else {
+                currentDate.setDate(currentDate.getDate() - 1);
+            }
+            updatePeriodDisplay();
+            renderCalendar();
+        }
+
+        function nextPeriod() {
+            if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() + 7);
+            } else {
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            updatePeriodDisplay();
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            updatePeriodDisplay();
+            renderCalendar();
+        }
+
+        function showPostDetails(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            
+            document.getElementById('postDetails').innerHTML = `
+                <div class="post-detail">
+                    <div class="post-header">
+                        <span class="platform-badge ${post.platform}">
+                            ${getPlatformIcon(post.platform)} ${post.platform.toUpperCase()}
+                        </span>
+                        <span class="status-badge ${post.status}">${post.status.toUpperCase()}</span>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    <div class="post-schedule">
+                        <strong>Scheduled:</strong> ${new Date(post.scheduledTime).toLocaleString()}
+                    </div>
+                    <div class="post-engagement">
+                        <div class="engagement-stat">
+                            <span class="stat-icon">👍</span>
+                            <span>${post.engagement.likes}</span>
+                        </div>
+                        <div class="engagement-stat">
+                            <span class="stat-icon">💬</span>
+                            <span>${post.engagement.comments}</span>
+                        </div>
+                        <div class="engagement-stat">
+                            <span class="stat-icon">🔄</span>
+                            <span>${post.engagement.shares}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('postModal').style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        // Initialize calendar on page load
+        document.addEventListener('DOMContentLoaded', initCalendar);
+    </script>
+
+    <style>
+        .calendar-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .day-header {
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(6, 120px);
+        }
+
+        .calendar-day {
+            border: 1px solid #e9ecef;
+            padding: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .calendar-day:hover {
+            background-color: #f8f9fa;
+        }
+
+        .calendar-day.today {
+            background-color: #e3f2fd;
+        }
+
+        .calendar-day.other-month {
+            color: #adb5bd;
+            background-color: #f8f9fa;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .post-item {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px;
+            margin: 2px 0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .post-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .post-item.instagram { border-left: 3px solid #E4405F; }
+        .post-item.twitter { border-left: 3px solid #1DA1F2; }
+        .post-item.linkedin { border-left: 3px solid #0077B5; }
+        .post-item.facebook { border-left: 3px solid #1877F2; }
+
+        .post-item.scheduled { background-color: #fff3cd; }
+        .post-item.published { background-color: #d1edff; }
+        .post-item.failed { background-color: #f8d7da; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .platform-badge.instagram { background: #E4405F; color: white; }
+        .platform-badge.twitter { background: #1DA1F2; color: white; }
+        .platform-badge.linkedin { background: #0077B5; color: white; }
+        .platform-badge.facebook { background: #1877F2; color: white; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.scheduled { background: #fff3cd; color: #856404; }
+        .status-badge.published { background: #d1edff; color: #0c5460; }
+        .status-badge.failed { background: #f8d7da; color: #721c24; }
+
+        .post-engagement {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .engagement-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</body>
+</html>

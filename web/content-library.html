@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Library - JACAI Pro</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>🤖 JACAI Pro</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="/compose" class="nav-link"><span class="icon">✍️</span> Compose</a></li>
+                <li><a href="/calendar" class="nav-link"><span class="icon">📅</span> Calendar</a></li>
+                <li><a href="/analytics" class="nav-link"><span class="icon">📈</span> Analytics</a></li>
+                <li><a href="/content-library" class="nav-link active"><span class="icon">📚</span> Content Library</a></li>
+                <li><a href="/team" class="nav-link"><span class="icon">👥</span> Team</a></li>
+                <li><a href="/settings" class="nav-link"><span class="icon">⚙️</span> Settings</a></li>
+            </ul>
+            <div class="user-profile">
+                <div class="profile-info">
+                    <span id="userAvatar">👤</span>
+                    <span id="userName">User</span>
+                </div>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Content Library</h1>
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search content..." onkeyup="searchContent()">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <button class="btn-secondary" onclick="bulkActions()">📋 Bulk Actions</button>
+                    <button class="btn-primary" onclick="window.location.href='/compose'">+ Create Content</button>
+                </div>
+            </header>
+
+            <!-- Filters and Tabs -->
+            <div class="content-filters">
+                <div class="filter-tabs">
+                    <button class="tab-btn active" onclick="switchTab('all')" data-tab="all">All Content</button>
+                    <button class="tab-btn" onclick="switchTab('published')" data-tab="published">Published</button>
+                    <button class="tab-btn" onclick="switchTab('scheduled')" data-tab="scheduled">Scheduled</button>
+                    <button class="tab-btn" onclick="switchTab('drafts')" data-tab="drafts">Drafts</button>
+                    <button class="tab-btn" onclick="switchTab('templates')" data-tab="templates">Templates</button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="platformFilter" onchange="applyFilters()">
+                        <option value="all">All Platforms</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="twitter">Twitter</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="facebook">Facebook</option>
+                    </select>
+                    
+                    <select id="dateFilter" onchange="applyFilters()">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                    
+                    <div class="view-toggle">
+                        <button class="view-btn active" onclick="switchView('grid')" data-view="grid">⊞</button>
+                        <button class="view-btn" onclick="switchView('list')" data-view="list">☰</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid/List -->
+            <div class="content-container">
+                <div id="gridView" class="content-grid active">
+                    <!-- Content items will be loaded here -->
+                </div>
+                
+                <div id="listView" class="content-list">
+                    <table class="content-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th>Content</th>
+                                <th>Platform</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Performance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contentTableBody">
+                            <!-- Table rows will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="page-btn" onclick="previousPage()">‹ Previous</button>
+                <div class="page-numbers" id="pageNumbers">
+                    <!-- Page numbers will be generated here -->
+                </div>
+                <button class="page-btn" onclick="nextPage()">Next ›</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Content Detail Modal -->
+    <div id="contentModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Content Details</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="contentDetails">
+                <!-- Content details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="editContent()">Edit</button>
+                <button class="btn-secondary" onclick="duplicateContent()">Duplicate</button>
+                <button class="btn-secondary" onclick="rescheduleContent()">Reschedule</button>
+                <button class="btn-danger" onclick="deleteContent()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'all';
+        let currentView = 'grid';
+        let currentPage = 1;
+        let itemsPerPage = 12;
+        let selectedItems = new Set();
+        
+        // Sample content data
+        let contentLibrary = [
+            {
+                id: 1,
+                content: "🚀 Exciting AI productivity tips that will transform your workflow! These game-changing strategies have helped thousands of professionals...",
+                platform: "instagram",
+                status: "published",
+                date: "2024-01-15T10:00:00",
+                performance: { likes: 342, comments: 28, shares: 15 },
+                media: "https://via.placeholder.com/300x300?text=AI+Tips",
+                hashtags: "#productivity #AI #workflow #tips"
+            },
+            {
+                id: 2,
+                content: "Thread: Social media automation best practices 🧵\n\n1/ Automation isn't about being lazy - it's about being strategic...",
+                platform: "twitter",
+                status: "scheduled",
+                date: "2024-01-16T14:30:00",
+                performance: { likes: 0, comments: 0, shares: 0 },
+                media: null,
+                hashtags: "#automation #socialmedia #productivity"
+            },
+            {
+                id: 3,
+                content: "Professional insights on digital marketing trends for 2024. The landscape is evolving rapidly...",
+                platform: "linkedin",
+                status: "published",
+                date: "2024-01-14T09:00:00",
+                performance: { likes: 89, comments: 12, shares: 23 },
+                media: "https://via.placeholder.com/400x200?text=Marketing+Trends",
+                hashtags: "#marketing #digital #trends #2024"
+            },
+            {
+                id: 4,
+                content: "Draft: Content creation strategies for small businesses...",
+                platform: "facebook",
+                status: "draft",
+                date: "2024-01-13T16:00:00",
+                performance: { likes: 0, comments: 0, shares: 0 },
+                media: null,
+                hashtags: "#smallbusiness #content #strategy"
+            }
+        ];
+
+        function initContentLibrary() {
+            loadContent();
+            generatePagination();
+        }
+
+        function loadContent() {
+            const filteredContent = filterContent();
+            const paginatedContent = paginateContent(filteredContent);
+            
+            if (currentView === 'grid') {
+                renderGridView(paginatedContent);
+            } else {
+                renderListView(paginatedContent);
+            }
+        }
+
+        function filterContent() {
+            let filtered = contentLibrary;
+            
+            // Filter by tab
+            if (currentTab !== 'all') {
+                filtered = filtered.filter(item => item.status === currentTab);
+            }
+            
+            // Filter by platform
+            const platformFilter = document.getElementById('platformFilter').value;
+            if (platformFilter !== 'all') {
+                filtered = filtered.filter(item => item.platform === platformFilter);
+            }
+            
+            // Filter by search
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(item => 
+                    item.content.toLowerCase().includes(searchTerm) ||
+                    item.hashtags.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            return filtered;
+        }
+
+        function paginateContent(content) {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            return content.slice(startIndex, startIndex + itemsPerPage);
+        }
+
+        function renderGridView(content) {
+            const grid = document.getElementById('gridView');
+            grid.innerHTML = content.map(item => `
+                <div class="content-card ${item.platform}" data-id="${item.id}">
+                    <div class="content-header">
+                        <input type="checkbox" class="item-checkbox" value="${item.id}" onchange="toggleItemSelection(${item.id})">
+                        <span class="platform-badge ${item.platform}">${getPlatformIcon(item.platform)}</span>
+                        <span class="status-badge ${item.status}">${item.status}</span>
+                    </div>
+                    
+                    ${item.media ? `<div class="content-media"><img src="${item.media}" alt="Content media"></div>` : ''}
+                    
+                    <div class="content-body">
+                        <p class="content-text">${item.content.substring(0, 120)}${item.content.length > 120 ? '...' : ''}</p>
+                        <div class="content-hashtags">${item.hashtags}</div>
+                    </div>
+                    
+                    <div class="content-footer">
+                        <div class="content-date">${formatDate(item.date)}</div>
+                        <div class="content-performance">
+                            <span>👍 ${item.performance.likes}</span>
+                            <span>💬 ${item.performance.comments}</span>
+                            <span>🔄 ${item.performance.shares}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="content-actions">
+                        <button class="action-btn" onclick="viewContent(${item.id})" title="View">👁️</button>
+                        <button class="action-btn" onclick="editContent(${item.id})" title="Edit">✏️</button>
+                        <button class="action-btn" onclick="duplicateContent(${item.id})" title="Duplicate">📋</button>
+                        <button class="action-btn danger" onclick="deleteContent(${item.id})" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderListView(content) {
+            const tbody = document.getElementById('contentTableBody');
+            tbody.innerHTML = content.map(item => `
+                <tr data-id="${item.id}">
+                    <td><input type="checkbox" class="item-checkbox" value="${item.id}" onchange="toggleItemSelection(${item.id})"></td>
+                    <td class="content-cell">
+                        <div class="content-preview">
+                            ${item.media ? `<img src="${item.media}" class="preview-image" alt="Preview">` : '<div class="no-image">📝</div>'}
+                            <div class="preview-text">
+                                <div class="preview-content">${item.content.substring(0, 80)}...</div>
+                                <div class="preview-hashtags">${item.hashtags}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="platform-badge ${item.platform}">${getPlatformIcon(item.platform)} ${item.platform}</span></td>
+                    <td><span class="status-badge ${item.status}">${item.status}</span></td>
+                    <td>${formatDate(item.date)}</td>
+                    <td class="performance-cell">
+                        <div class="performance-stats">
+                            <span>👍 ${item.performance.likes}</span>
+                            <span>💬 ${item.performance.comments}</span>
+                            <span>🔄 ${item.performance.shares}</span>
+                        </div>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="action-btn" onclick="viewContent(${item.id})">👁️</button>
+                        <button class="action-btn" onclick="editContent(${item.id})">✏️</button>
+                        <button class="action-btn" onclick="duplicateContent(${item.id})">📋</button>
+                        <button class="action-btn danger" onclick="deleteContent(${item.id})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getPlatformIcon(platform) {
+            const icons = {
+                instagram: '📸',
+                twitter: '🐦',
+                linkedin: '💼',
+                facebook: '👥',
+                tiktok: '🎵',
+                youtube: '📺'
+            };
+            return icons[platform] || '📱';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+            
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            loadContent();
+            generatePagination();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update active view button
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+            
+            // Show/hide views
+            document.getElementById('gridView').classList.toggle('active', view === 'grid');
+            document.getElementById('listView').classList.toggle('active', view === 'list');
+            
+            loadContent();
+        }
+
+        function searchContent() {
+            currentPage = 1;
+            loadContent();
+            generatePagination();
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            loadContent();
+            generatePagination();
+        }
+
+        function viewContent(id) {
+            const item = contentLibrary.find(c => c.id === id);
+            if (!item) return;
+            
+            document.getElementById('contentDetails').innerHTML = `
+                <div class="content-detail-view">
+                    <div class="detail-header">
+                        <span class="platform-badge ${item.platform}">${getPlatformIcon(item.platform)} ${item.platform.toUpperCase()}</span>
+                        <span class="status-badge ${item.status}">${item.status.toUpperCase()}</span>
+                        <span class="detail-date">${formatDate(item.date)}</span>
+                    </div>
+                    
+                    ${item.media ? `<div class="detail-media"><img src="${item.media}" alt="Content media"></div>` : ''}
+                    
+                    <div class="detail-content">
+                        <h4>Content:</h4>
+                        <p>${item.content}</p>
+                    </div>
+                    
+                    <div class="detail-hashtags">
+                        <h4>Hashtags:</h4>
+                        <p>${item.hashtags}</p>
+                    </div>
+                    
+                    <div class="detail-performance">
+                        <h4>Performance:</h4>
+                        <div class="performance-grid">
+                            <div class="perf-stat">
+                                <span class="perf-icon">👍</span>
+                                <span class="perf-value">${item.performance.likes}</span>
+                                <span class="perf-label">Likes</span>
+                            </div>
+                            <div class="perf-stat">
+                                <span class="perf-icon">💬</span>
+                                <span class="perf-value">${item.performance.comments}</span>
+                                <span class="perf-label">Comments</span>
+                            </div>
+                            <div class="perf-stat">
+                                <span class="perf-icon">🔄</span>
+                                <span class="perf-value">${item.performance.shares}</span>
+                                <span class="perf-label">Shares</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('contentModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('contentModal').style.display = 'none';
+        }
+
+        function toggleItemSelection(id) {
+            if (selectedItems.has(id)) {
+                selectedItems.delete(id);
+            } else {
+                selectedItems.add(id);
+            }
+            updateBulkActions();
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll;
+                const id = parseInt(checkbox.value);
+                if (selectAll) {
+                    selectedItems.add(id);
+                } else {
+                    selectedItems.delete(id);
+                }
+            });
+            
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulkPanel = document.querySelector('.bulk-actions');
+            if (selectedItems.size > 0) {
+                if (!bulkPanel) {
+                    // Create bulk actions panel
+                    const panel = document.createElement('div');
+                    panel.className = 'bulk-actions';
+                    panel.innerHTML = `
+                        <div class="bulk-info">
+                            <span id="selectedCount">${selectedItems.size}</span> items selected
+                        </div>
+                        <div class="bulk-buttons">
+                            <button class="btn-secondary" onclick="bulkReschedule()">📅 Reschedule</button>
+                            <button class="btn-secondary" onclick="bulkDuplicate()">📋 Duplicate</button>
+                            <button class="btn-danger" onclick="bulkDelete()">🗑️ Delete</button>
+                        </div>
+                    `;
+                    document.querySelector('.main-content').appendChild(panel);
+                } else {
+                    document.getElementById('selectedCount').textContent = selectedItems.size;
+                }
+            } else if (bulkPanel) {
+                bulkPanel.remove();
+            }
+        }
+
+        function generatePagination() {
+            const totalItems = filterContent().length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const pageNumbers = document.getElementById('pageNumbers');
+            
+            pageNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => goToPage(i);
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadContent();
+            generatePagination();
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadContent();
+                generatePagination();
+            }
+        }
+
+        function nextPage() {
+            const totalItems = filterContent().length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadContent();
+                generatePagination();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initContentLibrary);
+    </script>
+
+    <style>
+        .content-filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .view-toggle {
+            display: flex;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .view-btn {
+            padding: 0.75rem;
+            border: none;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-grid.active {
+            display: grid;
+        }
+
+        .content-list {
+            display: none;
+        }
+
+        .content-list.active {
+            display: block;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .content-media img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .content-body {
+            padding: 1rem;
+        }
+
+        .content-text {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .content-hashtags {
+            color: #6366f1;
+            font-size: 0.875rem;
+        }
+
+        .content-footer {
+            padding: 1rem;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .content-performance {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .content-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .content-card:hover .content-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.9);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .action-btn.danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .content-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .content-table th,
+        .content-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .content-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .content-preview {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .preview-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .no-image {
+            width: 60px;
+            height: 60px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .preview-content {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-hashtags {
+            color: #6366f1;
+            font-size: 0.875rem;
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .platform-badge.instagram { background: #E4405F; color: white; }
+        .platform-badge.twitter { background: #1DA1F2; color: white; }
+        .platform-badge.linkedin { background: #0077B5; color: white; }
+        .platform-badge.facebook { background: #1877F2; color: white; }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.published { background: #d1edff; color: #0c5460; }
+        .status-badge.scheduled { background: #fff3cd; color: #856404; }
+        .status-badge.draft { background: #f8d7da; color: #721c24; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn, .page-number {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-number.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .bulk-actions {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            z-index: 100;
+        }
+
+        .bulk-info {
+            font-weight: 600;
+        }
+
+        .bulk-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal.large .modal-content {
+            max-width: 800px;
+        }
+
+        .content-detail-view {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .detail-header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-media img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-content, .detail-hashtags, .detail-performance {
+            margin-bottom: 1.5rem;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .perf-stat {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .perf-icon {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .perf-value {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .perf-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .content-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-controls {
+                justify-content: space-between;
+            }
+            
+            .search-bar input {
+                width: 100%;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
