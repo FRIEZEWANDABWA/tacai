@@ -3,6 +3,9 @@
 .env.local
 .env.production
 
+# Secure directory (never commit)
+.secure/
+
 # Database
 *.db
 *.sqlite
